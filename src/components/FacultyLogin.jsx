@@ -5,6 +5,8 @@ import Header from './Header'
 import Footer from './Footer'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import supabase from "../config/SupabaseClient";
+import { useNavigate } from 'react-router-dom';
 
 
 const Fcontainer = styled.div`
@@ -105,18 +107,68 @@ const FacultyLogin = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [designation, setDesignation] = useState("");
+    const navigate = useNavigate();
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log("Username:", username);
-        console.log("Password:", password);
-        console.log("Clicked");
-    };
+    // const handleSubmit = (event) => {
+    //     event.preventDefault();
+    //     console.log("Username:", username);
+    //     console.log("Password:", password);
+    //     console.log("Clicked");
+    // };
     const [showPassword, setShowPassword] = useState(false);
     const handleTogglePassword = () => {
       setShowPassword(!showPassword);
     };
 
+    const handleSubmit = async (e) => {
+      e.preventDefault(); // Prevent the default form submission
+
+      // Basic validation
+      if (!username || !password || !designation) {
+          alert("All fields are required!");
+          return;
+      }
+
+      // Additional validation for email format
+      // const emailPattern = /^[^\s@]+@gst\.sies\.edu\.in$/;
+      // if (!emailPattern.test(email)) {
+      //     alert("Please enter a valid college email address");
+      //     return;
+      // }
+
+      if (designation==='admin'){
+      try {
+          // Fetching user data from Supabase
+          const { data, error } = await supabase
+              .from('admin')
+              .select('*')
+              .eq('a_email', username)
+              .eq('a_password', password);
+
+          if (error) {
+              throw new Error(error.message);
+          }
+
+          if (data.length === 0) {
+              alert("Invalid email or password.");
+              return;
+          }
+
+          const admin = data[0];
+
+          // Storing non-sensitive data
+          sessionStorage.setItem('userEmail', admin.a_email);
+          sessionStorage.setItem('userdesignation', designation);
+          // sessionStorage.setItem('userPRN', student.a_prn);
+
+          navigate('/add-faculty');
+          console.log(data);
+      } catch (error) {
+          console.error("Error:", error.message);
+          alert("An error occurred. Please try again.");
+      }
+  };
+};
     return (
       <>
       <Header/>
