@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import supabase from "../config/SupabaseClient";
 
+// Styled components
 const Button = styled.button`
   padding: 10px;
   margin: 10px;
@@ -95,7 +96,7 @@ const AddFaculty = () => {
   }, []);
 
   const fetchFacultyData = async () => {
-    const { data, error } = await supabase.from("AddFaculty").select();
+    const { data, error } = await supabase.from("faculty").select();
     if (error) {
       console.error("Error fetching faculty data:", error);
     } else {
@@ -109,7 +110,7 @@ const AddFaculty = () => {
 
   const handleAddFaculty = async () => {
     if (newFaculty.f_empid && newFaculty.f_name && newFaculty.f_email) {
-      const { data, error } = await supabase.from("AddFaculty").insert([newFaculty]);
+      const { data, error } = await supabase.from("faculty").insert([newFaculty]);
       if (error) {
         console.error("Error adding faculty member:", error);
       } else {
@@ -119,7 +120,7 @@ const AddFaculty = () => {
   };
 
   const handleDeleteFaculty = async (id) => {
-    const { error } = await supabase.from("AddFaculty").delete().eq("id", id);
+    const { error } = await supabase.from("faculty").delete().eq("id", id);
     if (error) {
       console.error("Error deleting faculty member:", error);
     } else {
@@ -160,8 +161,8 @@ const AddFaculty = () => {
           <thead>
             <tr>
               <TableHeader>Faculty ID</TableHeader>
-              <TableHeader>Faculty Name</TableHeader>
-              <TableHeader>Faculty Email</TableHeader>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Email</TableHeader>
               <TableHeader>Action</TableHeader>
             </tr>
           </thead>
