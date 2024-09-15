@@ -162,7 +162,7 @@ const AddFaculty = () => {
               <TableHeader>Faculty ID</TableHeader>
               <TableHeader>Faculty Name</TableHeader>
               <TableHeader>Faculty Email</TableHeader>
-              <TableHeader>Faculty Action</TableHeader>
+              <TableHeader>Action</TableHeader>
             </tr>
           </thead>
           <tbody>
