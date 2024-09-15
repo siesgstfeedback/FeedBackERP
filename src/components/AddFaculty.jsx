@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import supabase from "../config/SupabaseClient";
 
-// Styled components
 const Button = styled.button`
   padding: 10px;
   margin: 10px;
@@ -82,7 +81,7 @@ const TableCell = styled.td`
   text-align: center;
 `;
 
-const AddFacultyComponent = () => {
+const AddFaculty = () => {
   const [newFaculty, setNewFaculty] = useState({
     f_empid: "",
     f_name: "",
@@ -161,9 +160,9 @@ const AddFacultyComponent = () => {
           <thead>
             <tr>
               <TableHeader>Faculty ID</TableHeader>
-              <TableHeader>Name</TableHeader>
-              <TableHeader>Email</TableHeader>
-              <TableHeader>Action</TableHeader>
+              <TableHeader>Faculty Name</TableHeader>
+              <TableHeader>Faculty Email</TableHeader>
+              <TableHeader>Faculty Action</TableHeader>
             </tr>
           </thead>
           <tbody>
@@ -184,4 +183,4 @@ const AddFacultyComponent = () => {
   );
 };
 
-export default AddFacultyComponent;
+export default AddFaculty;
