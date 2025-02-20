@@ -227,7 +227,7 @@ const SignUp = () => {
         <Container>
           <LogDiv>
             <HeroDiv>
-              <Title>SIES Graduate School of Technology</Title> {/* Enhanced title */}
+              <Title>Login</Title> {/* Enhanced title */}
             </HeroDiv>
             <HeroDiv>
               <Button onClick={() => navigate('/faculty-login')}>Faculty</Button>

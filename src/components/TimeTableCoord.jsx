@@ -230,6 +230,10 @@ const TimeTableCoord = () => {
           <option value="">Select Division</option>
           <option value="A">A</option>
           <option value="B">B</option>
+          <option value="B ECS">B ECS</option>
+          <option value="B IOT">B IOT</option>
+          <option value="B AIDS">B AIDS</option>
+          <option value="B AIML">B AIML</option>
           <option value="C">C</option>
           <option value="D">D</option>
           <option value="E">E</option>
