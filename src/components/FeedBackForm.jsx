@@ -183,7 +183,8 @@ const FeedbackForm = () => {
           .eq("subject_name", studentData.s_dlo1_lab)
           .eq("subject_branch", studentData.s_branch)
           .eq("subject_semester", studentData.s_semester)
-          .eq("division", studentData.s_division);
+          .eq("division", studentData.s_division)
+          .or(`batch.eq.${studentData.s_batch},batch.is.null`);
 
         if (dlo1_labError) {
           console.error("Error fetching DLO1 Lab:", dlo1_labError.message);
@@ -217,7 +218,8 @@ const FeedbackForm = () => {
           .eq("subject_name", studentData.s_dlo2_lab)
           .eq("subject_branch", studentData.s_branch)
           .eq("subject_semester", studentData.s_semester)
-          .eq("division", studentData.s_division);
+          .eq("division", studentData.s_division)
+          .or(`batch.eq.${studentData.s_batch},batch.is.null`);
 
         if (dlo2_labError) {
           console.error("Error fetching DLO2 Lab:", dlo2_labError.message);

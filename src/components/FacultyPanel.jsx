@@ -231,10 +231,12 @@ const FacultyPanel = () => {
       toast.error("Please fill all the required fields.");
       return;
     }
-    if (!selectedDivision){
-      toast.error("Please fill the division");
+    if (!selectedDivision || !selectedBranch || !selectedSemester){
+      toast.error("Please fill all the required fields.");
       return;
     }
+
+
     if (
       (selectedType === "Lab" ||
         selectedType === "DLO 1 Lab" ||
