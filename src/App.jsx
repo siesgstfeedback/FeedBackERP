@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import FacultyView from './components/FacultyView';
 import NotFilledStudents from './components/NotFilledStudents';
 import TimeTableCoord from './components/TimeTableCoord';
+import AdminAllocation from './components/AdminAllocation'
 
 function App() {
   const [settings, setSettings] = useState({ feedback: false, displayFacultyFeedback: false });
@@ -52,6 +53,7 @@ function App() {
         <Route path="/feedback-admin" element={<FeedbackAdmin />} />
         <Route path="/not-filled-students" element={<NotFilledStudents />} />
         <Route path="/tt-coord" element={<TimeTableCoord />} />
+        <Route path="/ttcoordpanel" element={<AdminAllocation />} />
         {settings.feedback && <Route path="/feedback" element={<FeedBackForm />} />}
         {settings.displayFacultyFeedback && <Route path="/faculty-view" element={<FacultyView />} />}
         {/* Add other routes as needed */}

@@ -140,7 +140,21 @@ const FacultyLogin = () => {
                     .select('*')
                     .eq('f_email', username)
                     .eq('f_empid', password));
-            } else {
+            } 
+            else if(designation === 'ttcord') {
+                if(((username==='ttcordfe@sies.edu.in') && (password==='TTCOORDFE'))||((username==='ttcordce@sies.edu.in') && (password==='TTCOORDCE'))||((username==='ttcordit@sies.edu.in') && (password==='TTCOORDIT'))||((username==='ttcordextc@sies.edu.in') && (password==='TTCOORDEXTC'))||((username==='ttcordecs@sies.edu.in') && (password==='TTCOORDECS'))||((username==='ttcordaids@sies.edu.in') && (password==='TTCOORDAIDS'))||((username==='ttcordaiml@sies.edu.in') && (password==='TTCOORDAIML'))||((username==='ttcordiot@sies.edu.in') && (password==='TTCOORDIOT'))||((username==='ttcordmech@sies.edu.in') && (password==='TTCOORDMECH'))){
+                    data = {username: username, designation: designation};
+                    sessionStorage.setItem('userEmail', username);
+                    sessionStorage.setItem('userdesignation', designation);
+                    navigate('/ttcoordpanel');
+                }
+                else {
+                    data = undefined;
+                    toast.error("Invalid email or password.");
+                };
+            }
+            
+            else {
                 toast.error("Invalid designation. Please select either admin or faculty.");
                 return;
             }
@@ -163,6 +177,7 @@ const FacultyLogin = () => {
                 sessionStorage.setItem('f_empid', password);
                 navigate('/faculty');
             }
+            
 
         } catch (error) {
             console.error("Error:", error.message);
@@ -241,6 +256,7 @@ const FacultyLogin = () => {
                                     {/* <option value="hod">Head of Department</option> */}
                                     <option value="faculty">Faculty</option>
                                     <option value="admin">Admin</option>
+                                    <option value="ttcord">Time Table Coord</option>
                                 </select>
                             </div>
                             <BackButtonContainer>
