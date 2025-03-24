@@ -227,7 +227,9 @@ const FeedbackForm = () => {
           combinedData = [...combinedData, ...dlo2_labData];
         }
       }
-
+      combinedData.sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
       // Update state and fetch faculty names
       setAllocations(combinedData);
       fetchFacultyNames(combinedData);
