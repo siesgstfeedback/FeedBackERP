@@ -230,6 +230,7 @@ const FeedbackForm = () => {
       combinedData.sort(
         (a, b) => new Date(a.created_at) - new Date(b.created_at)
       );
+      // console.log(combinedData);
       // Update state and fetch faculty names
       setAllocations(combinedData);
       fetchFacultyNames(combinedData);
