@@ -225,6 +225,8 @@ const TimeTableCoord = () => {
           <option value="6">Semester 6</option>
           <option value="7">Semester 7</option>
           <option value="8">Semester 8</option>
+          <option value="ME1">ME Sem 1</option>
+          <option value="ME2">ME Sem 2</option>
         </Select>
         <Select onChange={(e) => setDivision(e.target.value)} value={division}>
           <option value="">Select Division</option>

@@ -129,7 +129,7 @@ const AdminAllocation = () => {
 
   // States for criteria selection (similar to FacultyPanel)
   const [branches] = useState(["EXTC", "ECS", "AIDS", "AIML", "IOT", "CE", "IT", "MECH"]);
-  const [semesters] = useState([1, 2, 3, 4, 5, 6, 7, 8]);
+  const [semesters] = useState([1, 2, 3, 4, 5, 6, 7, 8, "ME1", "ME2"]);
   const [divisions] = useState(["A", "B", "B ECS", "B IOT", "B AIDS", "B AIML", "C", "D", "E", "F", "G", "H", "I", "J"]);
   const [subjectTypes] = useState(["Theory", "Lab", "ILO", "DLO 1", "DLO 2", "ILO Lab", "DLO 1 Lab", "DLO 2 Lab"]);
   const [batches] = useState([1, 2, 3]);

@@ -372,6 +372,8 @@ const AddSubject = () => {
             <option value="6">Semester 6</option>
             <option value="7">Semester 7</option>
             <option value="8">Semester 8</option>
+            <option value="ME1">ME Sem 1</option>
+            <option value="ME2">ME Sem 2</option>
           </Select>
           <Button onClick={handleAddSubject}>Add Subject</Button>
         </InputContainer>
