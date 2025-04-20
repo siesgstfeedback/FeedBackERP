@@ -157,159 +157,338 @@ const FacultyPanel = () => {
     setSelectedBatch([]);
   }, [selectedType]);
 
-  const fetchFeedbackSettings = async () => {
-    const { data, error } = await supabase
-      .from("settings")
-      .select("display_facultyfeedback")
-      .single();
 
-    if (error) {
+  const fetchFeedbackSettings = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/settings/feedback-display");
+      if (!response.ok) {
+        throw new Error("Failed to fetch settings");
+      }
+  
+      const result = await response.json();
+      setDisplayFeedback(result.display_facultyfeedback);
+    } catch (error) {
       console.error("Error fetching settings:", error);
-    } else {
-      setDisplayFeedback(data.display_facultyfeedback);
     }
   };
+  
+  // const fetchFeedbackSettings = async () => {
+  //   const { data, error } = await supabase
+  //     .from("settings")
+  //     .select("display_facultyfeedback")
+  //     .single();
+
+  //   if (error) {
+  //     console.error("Error fetching settings:", error);
+  //   } else {
+  //     setDisplayFeedback(data.display_facultyfeedback);
+  //   }
+  // };
+
 
   const checkIfFaculty = async () => {
     const username = sessionStorage.getItem("userEmail");
-
+  
     if (!username) {
       setLoading(false);
       return;
     }
-
-    const { data, error } = await supabase
-      .from("faculty")
-      .select("f_empid, f_name")
-      .eq("f_email", username);
-
-    if (error) {
-      console.error("Error checking faculty status:", error);
-    } else if (data && data.length > 0) {
+  
+    try {
+      const res = await fetch(`http://localhost:5000/api/faculty/${username}`);
+      if (!res.ok) {
+        throw new Error("Faculty not found");
+      }
+  
+      const data = await res.json();
       setIsFaculty(true);
-      setFacultyId(data[0].f_empid);
-      setFacultyName(data[0].f_name);
-      fetchFacultySubjects(data[0].f_empid);
+      setFacultyId(data.f_empid);
+      setFacultyName(data.f_name);
+      fetchFacultySubjects(data.f_empid);
       toast.success("Logged-in Successfully!");
-    } else {
+    } catch (error) {
+      console.error("Error checking faculty status:", error);
       console.log("User is not a faculty.");
     }
+  
     setLoading(false);
   };
+  
+
+  // const checkIfFaculty = async () => {
+  //   const username = sessionStorage.getItem("userEmail");
+
+  //   if (!username) {
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const { data, error } = await supabase
+  //     .from("faculty")
+  //     .select("f_empid, f_name")
+  //     .eq("f_email", username);
+
+  //   if (error) {
+  //     console.error("Error checking faculty status:", error);
+  //   } else if (data && data.length > 0) {
+  //     setIsFaculty(true);
+  //     setFacultyId(data[0].f_empid);
+  //     setFacultyName(data[0].f_name);
+  //     fetchFacultySubjects(data[0].f_empid);
+  //     toast.success("Logged-in Successfully!");
+  //   } else {
+  //     console.log("User is not a faculty.");
+  //   }
+  //   setLoading(false);
+  // };
+
 
   const fetchFacultySubjects = async (f_empid) => {
-    const { data, error } = await supabase
-      .from("f_allocation")
-      .select()
-      .eq("f_empid", f_empid);
-
-    if (error) {
-      console.error("Error fetching assigned subjects:", error);
-    } else {
+    try {
+      const res = await fetch(`http://localhost:5000/api/faculty/${f_empid}/subjects`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch subjects");
+      }
+  
+      const data = await res.json();
       setFacultySubjects(data || []);
+    } catch (error) {
+      console.error("Error fetching assigned subjects:", error);
     }
   };
+  
+  // const fetchFacultySubjects = async (f_empid) => {
+  //   const { data, error } = await supabase
+  //     .from("f_allocation")
+  //     .select()
+  //     .eq("f_empid", f_empid);
+
+  //   if (error) {
+  //     console.error("Error fetching assigned subjects:", error);
+  //   } else {
+  //     setFacultySubjects(data || []);
+  //   }
+  // };
+
 
   const fetchSubjects = async () => {
-    const { data, error } = await supabase
-      .from("subject")
-      .select()
-      .eq("subject_branch", selectedBranch)
-      .eq("subject_semester", selectedSemester)
-      .eq("subject_type", selectedType);
-
-    if (error) {
-      console.error("Error fetching subjects:", error);
-    } else {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/subjects?branch=${selectedBranch}&semester=${selectedSemester}&type=${selectedType}`
+      );
+  
+      if (!res.ok) {
+        throw new Error("Failed to fetch subjects");
+      }
+  
+      const data = await res.json();
       setSubjectOptions(data || []);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
     }
   };
+  
+  // const fetchSubjects = async () => {
+  //   const { data, error } = await supabase
+  //     .from("subject")
+  //     .select()
+  //     .eq("subject_branch", selectedBranch)
+  //     .eq("subject_semester", selectedSemester)
+  //     .eq("subject_type", selectedType);
 
-  const handleAssignSubject = async () => {
-    const f_empid = sessionStorage.getItem("f_empid");
-    if (!f_empid || !selectedSubject) {
-      toast.error("Please fill all the required fields.");
-      return;
-    }
-    if (!selectedDivision || !selectedBranch || !selectedSemester){
-      toast.error("Please fill all the required fields.");
-      return;
-    }
+  //   if (error) {
+  //     console.error("Error fetching subjects:", error);
+  //   } else {
+  //     setSubjectOptions(data || []);
+  //   }
+  // };
 
 
-    if (
-      (selectedType === "Lab" ||
-        selectedType === "DLO 1 Lab" ||
-        selectedType === "DLO 2 Lab") &&
-      selectedBatch.length === 0
-    ) {
-      toast.error("Please select at least one batch.");
-      return;
-    }
+  // Frontend: handleAssignSubject (Client-side)
+// Frontend: handleAssignSubject (Client-side)
+const handleAssignSubject = async () => {
+  const f_empid = sessionStorage.getItem("f_empid");
 
-    // Insert a separate row for each selected batch
-    if (selectedBatch.length > 0) {
-      for (const batch of selectedBatch) {
-        const { error } = await supabase.from("f_allocation").insert({
-          f_empid: f_empid,
-          subject_name: selectedSubject,
-          subject_type: selectedType,
-          subject_branch: selectedBranch,
-          subject_semester: selectedSemester,
-          division: selectedDivision,
-          batch: batch,
-        });
+  if (!f_empid || !selectedSubject || !selectedDivision || !selectedBranch || !selectedSemester) {
+    toast.error("Please fill all the required fields.");
+    return;
+  }
 
-        if (error) {
-          console.error("Error assigning subject:", error);
-          toast.error("Failed to assign subject");
-          return;
-        }
-      }
-    } else {
-      // Insert a single row if no batches are selected
-      const { error } = await supabase.from("f_allocation").insert({
-        f_empid: f_empid,
-        subject_name: selectedSubject,
-        subject_type: selectedType,
-        subject_branch: selectedBranch,
-        subject_semester: selectedSemester,
-        division: selectedDivision,
-        batch: null,
-      });
+  // Check if it's a Lab type subject and batches are selected
+  if (
+    (selectedType === "Lab" || selectedType === "DLO 1 Lab" || selectedType === "DLO 2 Lab") &&
+    selectedBatch.length === 0
+  ) {
+    toast.error("Please select at least one batch.");
+    return;
+  }
 
-      if (error) {
-        console.error("Error assigning subject:", error);
-        toast.error("Failed to assign subject");
-        return;
-      }
-    }
-
+  // Send the subject assignment to the backend
+  const response = await assignSubjectToBackend(f_empid, selectedSubject, selectedType, selectedBranch, selectedSemester, selectedDivision, selectedBatch);
+  
+  if (response.success) {
     toast.success("Subject assigned successfully!");
-    setSelectedBranch("");
-    setSelectedSemester("");
-    setSelectedDivision("");
-    setSelectedType("");
-    setSelectedBatch([]);
-    setSelectedSubject("");
+    resetForm();
     fetchFacultySubjects(f_empid);
-  };
+  } else {
+    toast.error("Failed to assign subject");
+  }
+};
 
-  const handleDeleteSubject = async (subjectId) => {
-    const { error } = await supabase
-      .from("f_allocation")
-      .delete()
-      .eq("id", subjectId);
+// Function to reset form fields after successful assignment
+const resetForm = () => {
+  setSelectedBranch("");
+  setSelectedSemester("");
+  setSelectedDivision("");
+  setSelectedType("");
+  setSelectedBatch([]);
+  setSelectedSubject("");
+};
 
-    if (error) {
-      console.error("Error deleting subject:", error);
-      toast.error("Failed to delete subject");
-    } else {
-      toast.success("Subject deleted successfully!");
-      const f_empid = sessionStorage.getItem("f_empid");
-      fetchFacultySubjects(f_empid);
-    }
-  };
+// Function to call the backend API to assign subject
+const assignSubjectToBackend = async (f_empid, selectedSubject, selectedType, selectedBranch, selectedSemester, selectedDivision, selectedBatch) => {
+  try {
+    const response = await fetch('http://localhost:5000/assign-fsubject', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        f_empid,
+        selectedSubject,
+        selectedType,
+        selectedBranch,
+        selectedSemester,
+        selectedDivision,
+        selectedBatch,
+      }),
+    });
+
+    const result = await response.json();
+    
+    return result; // returns the success or failure status from the backend
+  } catch (error) {
+    console.error("Error assigning subject:", error);
+    return { success: false, message: "Network or server error" };
+  }
+};
+
+
+
+  // const handleAssignSubject = async () => {
+  //   const f_empid = sessionStorage.getItem("f_empid");
+  //   if (!f_empid || !selectedSubject) {
+  //     toast.error("Please fill all the required fields.");
+  //     return;
+  //   }
+  //   if (!selectedDivision || !selectedBranch || !selectedSemester){
+  //     toast.error("Please fill all the required fields.");
+  //     return;
+  //   }
+
+
+  //   if (
+  //     (selectedType === "Lab" ||
+  //       selectedType === "DLO 1 Lab" ||
+  //       selectedType === "DLO 2 Lab") &&
+  //     selectedBatch.length === 0
+  //   ) {
+  //     toast.error("Please select at least one batch.");
+  //     return;
+  //   }
+
+  //   // Insert a separate row for each selected batch
+  //   if (selectedBatch.length > 0) {
+  //     for (const batch of selectedBatch) {
+  //       const { error } = await supabase.from("f_allocation").insert({
+  //         f_empid: f_empid,
+  //         subject_name: selectedSubject,
+  //         subject_type: selectedType,
+  //         subject_branch: selectedBranch,
+  //         subject_semester: selectedSemester,
+  //         division: selectedDivision,
+  //         batch: batch,
+  //       });
+
+  //       if (error) {
+  //         console.error("Error assigning subject:", error);
+  //         toast.error("Failed to assign subject");
+  //         return;
+  //       }
+  //     }
+  //   } else {
+  //     // Insert a single row if no batches are selected
+  //     const { error } = await supabase.from("f_allocation").insert({
+  //       f_empid: f_empid,
+  //       subject_name: selectedSubject,
+  //       subject_type: selectedType,
+  //       subject_branch: selectedBranch,
+  //       subject_semester: selectedSemester,
+  //       division: selectedDivision,
+  //       batch: null,
+  //     });
+
+  //     if (error) {
+  //       console.error("Error assigning subject:", error);
+  //       toast.error("Failed to assign subject");
+  //       return;
+  //     }
+  //   }
+
+  //   toast.success("Subject assigned successfully!");
+  //   setSelectedBranch("");
+  //   setSelectedSemester("");
+  //   setSelectedDivision("");
+  //   setSelectedType("");
+  //   setSelectedBatch([]);
+  //   setSelectedSubject("");
+  //   fetchFacultySubjects(f_empid);
+  // };
+
+
+  // Frontend: handleDeleteSubject (Client-side)
+const handleDeleteSubject = async (subjectId) => {
+  const response = await deleteSubjectFromBackend(subjectId);
+  
+  if (response.success) {
+    toast.success("Subject deleted successfully!");
+    fetchFacultySubjects(sessionStorage.getItem("f_empid"));
+  } else {
+    toast.error("Failed to delete subject");
+  }
+};
+
+// Function to call the backend API to delete a subject
+const deleteSubjectFromBackend = async (subjectId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/delete-fsubject/${subjectId}`, {
+      method: 'DELETE',
+    });
+
+    const result = await response.json();
+    
+    return result; // returns the success or failure status from the backend
+  } catch (error) {
+    console.error("Error deleting subject:", error);
+    return { success: false, message: "Network or server error" };
+  }
+};
+
+  // const handleDeleteSubject = async (subjectId) => {
+  //   const { error } = await supabase
+  //     .from("f_allocation")
+  //     .delete()
+  //     .eq("id", subjectId);
+
+  //   if (error) {
+  //     console.error("Error deleting subject:", error);
+  //     toast.error("Failed to delete subject");
+  //   } else {
+  //     toast.success("Subject deleted successfully!");
+  //     const f_empid = sessionStorage.getItem("f_empid");
+  //     fetchFacultySubjects(f_empid);
+  //   }
+  // };
 
   const handleLogout = () => {
     sessionStorage.clear();

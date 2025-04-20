@@ -47,7 +47,6 @@ const Button = styled.button`
   }
 `;
 
-
 const RedButton = styled.button`
   padding: 12px 20px;
   margin: 10px;
@@ -87,7 +86,7 @@ const VerifyButton = styled.button`
   padding: 12px 20px;
   margin: 10px;
   border-radius: 12px;
-  background-color: #FF8C00;
+  background-color: #ff8c00;
   color: white;
   border: none;
   cursor: pointer;
@@ -286,27 +285,26 @@ const AdminPanel = () => {
     fetchSettings();
   }, []);
 
-
   const checkIfAdmin = async () => {
-    const email = sessionStorage.getItem('userEmail');
-  
+    const email = sessionStorage.getItem("userEmail");
+
     if (!email) {
       setLoading(false);
       return;
     }
-  
+
     try {
-      const response = await fetch('http://localhost:5000/check-admin', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/check-admin", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
       });
-  
+
       const result = await response.json();
       // console.log(result);
-  
+
       if (result.isAdmin) {
         setIsAdmin(true);
         // fetchFacultyData();
@@ -318,10 +316,9 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Error checking admin status:", error);
     }
-  
+
     setLoading(false);
   };
-  
 
   // const checkIfAdmin = async () => {
   //   const username = sessionStorage.getItem("userEmail");
@@ -348,22 +345,48 @@ const AdminPanel = () => {
   //   }
   // };
 
-  const fetchSettings = async () => {
-    const { data, error } = await supabase
-      .from("settings")
-      .select("*")
-      .eq("id", 1)
-      .single();
+  // const fetchSettings = async () => {
+  //   const { data, error } = await supabase
+  //     .from("settings")
+  //     .select("*")
+  //     .eq("id", 1)
+  //     .single();
 
-    if (error) {
-      console.error("Error fetching settings:", error);
-    } else if (data) {
-      setSettings({
-        student_editing: data.student_editing,
-        student_feedback: data.student_feedback,
-        display_facultyfeedback: data.display_facultyfeedback,
-        feedback_header_text: data.feedback_header_text,
+  //   if (error) {
+  //     console.error("Error fetching settings:", error);
+  //   } else if (data) {
+  //     setSettings({
+  //       student_editing: data.student_editing,
+  //       student_feedback: data.student_feedback,
+  //       display_facultyfeedback: data.display_facultyfeedback,
+  //       feedback_header_text: data.feedback_header_text,
+  //     });
+  //   }
+  // };
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/get-settings", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSettings({
+          student_editing: result.student_editing,
+          student_feedback: result.student_feedback,
+          display_facultyfeedback: result.display_facultyfeedback,
+          feedback_header_text: result.feedback_header_text,
+        });
+      } else {
+        console.error("Error fetching settings:", result.error);
+      }
+    } catch (error) {
+      console.error("Network error fetching settings:", error);
     }
   };
 
@@ -372,36 +395,97 @@ const AdminPanel = () => {
     navigate("/faculty-login");
   };
 
+  // const toggleSetting = async (setting) => {
+  //   const newValue = !settings[setting];
+  //   const { error } = await supabase
+  //     .from("settings")
+  //     .update({ [setting]: newValue })
+  //     .eq("id", 1);
+
+  //   if (error) {
+  //     console.error(`Error updating ${setting}:`, error);
+  //   } else {
+  //     setSettings((prev) => ({ ...prev, [setting]: newValue }));
+  //     toast.success(`Successfully updated ${setting}.`);
+  //   }
+  // };
+
   const toggleSetting = async (setting) => {
     const newValue = !settings[setting];
-    const { error } = await supabase
-      .from("settings")
-      .update({ [setting]: newValue })
-      .eq("id", 1);
 
-    if (error) {
-      console.error(`Error updating ${setting}:`, error);
-    } else {
-      setSettings((prev) => ({ ...prev, [setting]: newValue }));
-      toast.success(`Successfully updated ${setting}.`);
+    try {
+      const response = await fetch("http://localhost:5000/update-setting", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ setting, value: newValue }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSettings((prev) => ({ ...prev, [setting]: newValue }));
+        toast.success(`Successfully updated ${setting}.`);
+      } else {
+        console.error(`Error updating ${setting}:`, result.error);
+        toast.error(`Failed to update ${setting}.`);
+      }
+    } catch (error) {
+      console.error(`Network error updating ${setting}:`, error);
+      toast.error("Network error. Please try again.");
     }
   };
 
-  const handleUpdateFeedbackHeader = async () => {
-    const { error } = await supabase
-      .from("settings")
-      .update({ feedback_header_text: newHeaderText })
-      .eq("id", 1);
+  // const handleUpdateFeedbackHeader = async () => {
+  //   const { error } = await supabase
+  //     .from("settings")
+  //     .update({ feedback_header_text: newHeaderText })
+  //     .eq("id", 1);
 
-    if (error) {
-      console.error("Error updating feedback header:", error);
-      toast.error("Error updating feedback header.");
-    } else {
-      setSettings((prev) => ({ ...prev, feedback_header_text: newHeaderText }));
-      toast.success("Feedback header updated successfully!");
-      fetchSettings(); // Refetch settings to update the header in Header component
-      setShowModal(false);
-      window.location.reload();
+  //   if (error) {
+  //     console.error("Error updating feedback header:", error);
+  //     toast.error("Error updating feedback header.");
+  //   } else {
+  //     setSettings((prev) => ({ ...prev, feedback_header_text: newHeaderText }));
+  //     toast.success("Feedback header updated successfully!");
+  //     fetchSettings(); // Refetch settings to update the header in Header component
+  //     setShowModal(false);
+  //     window.location.reload();
+  //   }
+  // };
+
+  const handleUpdateFeedbackHeader = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/update-feedback-header",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ feedback_header_text: newHeaderText }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSettings((prev) => ({
+          ...prev,
+          feedback_header_text: newHeaderText,
+        }));
+        toast.success("Feedback header updated successfully!");
+        fetchSettings(); // Refresh settings in-app
+        setShowModal(false);
+        window.location.reload(); // Reload to update header component
+      } else {
+        console.error("Error updating header:", result.error);
+        toast.error("Error updating feedback header.");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      toast.error("Network error. Please try again.");
     }
   };
 
@@ -486,7 +570,9 @@ const AdminPanel = () => {
 
           <Card>
             <h3>Verify Faculty Allocation</h3>
-            <VerifyButton onClick={() => navigate("/tt-coord")}>Verify Allocation</VerifyButton>
+            <VerifyButton onClick={() => navigate("/tt-coord")}>
+              Verify Allocation
+            </VerifyButton>
           </Card>
 
           <Card>
@@ -525,8 +611,8 @@ const AdminPanel = () => {
         >
           {settings.display_facultyfeedback ? "Disable Faculty Feedback Display" : "Enable Faculty Feedback Display"}
         </ToggleButton> */}
-        <br/>
-        <br/>
+            <br />
+            <br />
             <Button onClick={() => setShowModal(true)}>
               Update Feedback Header
             </Button>
