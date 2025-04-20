@@ -189,76 +189,200 @@ const AddFaculty = () => {
   }, []);
 
   const checkIfAdmin = async () => {
-    const username = sessionStorage.getItem('userEmail');
-    
-    if (!username) {
+    const email = sessionStorage.getItem('userEmail');
+  
+    if (!email) {
       setLoading(false);
       return;
     }
-
-    const { data, error } = await supabase
-      .from('admin')
-      .select()
-      .eq('a_email', username);
-
-    if (error) {
+  
+    try {
+      const response = await fetch('http://localhost:5000/check-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const result = await response.json();
+      // console.log(result);
+  
+      if (result.isAdmin) {
+        setIsAdmin(true);
+        fetchFacultyData();
+      } else {
+        console.log("User is not an admin.");
+      }
+    } catch (error) {
       console.error("Error checking admin status:", error);
-    } else if (data && data.length > 0) {
-      setIsAdmin(true);
-      fetchFacultyData(); // Fetch faculty data only if the user is admin
-    } else {
-      console.log("User is not an admin.");
     }
-    setLoading(false); // End loading
+  
+    setLoading(false);
   };
+  
+
+
+  // const checkIfAdmin = async () => {
+  //   const username = sessionStorage.getItem('userEmail');
+    
+  //   if (!username) {
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const { data, error } = await supabase
+  //     .from('admin')
+  //     .select()
+  //     .eq('a_email', username);
+
+  //   if (error) {
+  //     console.error("Error checking admin status:", error);
+  //   } else if (data && data.length > 0) {
+  //     setIsAdmin(true);
+  //     fetchFacultyData(); // Fetch faculty data only if the user is admin
+  //   } else {
+  //     console.log("User is not an admin.");
+  //   }
+  //   setLoading(false); // End loading
+  // };
+
+
 
   const fetchFacultyData = async () => {
-    const { data, error } = await supabase.from("faculty").select();
-    if (error) {
-      console.error("Error fetching faculty data:", error);
-    } else {
-      setFacultyList(data || []);
+    try {
+        const response = await fetch('http://localhost:5000/faculty-data', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        if (response.ok) {
+            setFacultyList(result.data);  // Assuming the backend returns faculty data in `data` field
+        } else {
+            console.error("Error fetching faculty data:", result.error);
+        }
+    } catch (error) {
+        console.error("Failed to fetch faculty data:", error);
     }
-  };
+};
+
+
+  // const fetchFacultyData = async () => {
+  //   const { data, error } = await supabase.from("faculty").select();
+  //   if (error) {
+  //     console.error("Error fetching faculty data:", error);
+  //   } else {
+  //     setFacultyList(data || []);
+  //   }
+  // };
 
   const handleInputChange = ({ target: { name, value } }) => {
     setNewFaculty((prev) => ({ ...prev, [name]: value }));
   };
 
+
+
+
   const handleAddFaculty = async () => {
     if (newFaculty.f_empid && newFaculty.f_name && newFaculty.f_email) {
-      const { error } = await supabase.from("faculty").insert([newFaculty]);
-
-      if (error) {
-        console.error("Error adding faculty member:", error.message);
-        toast.error("Error adding faculty member");
-      } else {
-        console.log("Successfully added faculty");
-
-        setFacultyList((prev) => [...prev]);
-        toast.success("Successfully added faculty");
-        setNewFaculty({
-          f_empid: "",
-          f_name: "",
-          f_email: "",
+      try {
+        const response = await fetch('http://localhost:5000/add-faculty', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newFaculty),
         });
-        fetchFacultyData();
+  
+        const result = await response.json();
+  
+        if (response.ok) {
+          console.log("Successfully added faculty");
+          toast.success("Successfully added faculty");
+          setFacultyList((prev) => [...prev, newFaculty]);
+          setNewFaculty({
+            f_empid: "",
+            f_name: "",
+            f_email: "",
+          });
+        } else {
+          console.error("Error adding faculty member:", result.error);
+          toast.error("Error adding faculty member");
+        }
+      } catch (error) {
+        console.error("Error adding faculty:", error);
+        toast.error("Error adding faculty member");
       }
     }
   };
+  
+
+  // const handleAddFaculty = async () => {
+  //   if (newFaculty.f_empid && newFaculty.f_name && newFaculty.f_email) {
+  //     const { error } = await supabase.from("faculty").insert([newFaculty]);
+
+  //     if (error) {
+  //       console.error("Error adding faculty member:", error.message);
+  //       toast.error("Error adding faculty member");
+  //     } else {
+  //       console.log("Successfully added faculty");
+
+  //       setFacultyList((prev) => [...prev]);
+  //       toast.success("Successfully added faculty");
+  //       setNewFaculty({
+  //         f_empid: "",
+  //         f_name: "",
+  //         f_email: "",
+  //       });
+  //       fetchFacultyData();
+  //     }
+  //   }
+  // };
+
+
+
 
   const handleDeleteFaculty = async (id) => {
     if (window.confirm("Are you sure you want to delete this faculty member?")) {
-      const { error } = await supabase.from("faculty").delete().eq("id", id);
-      if (error) {
-        console.error("Error deleting faculty member:", error);
+      try {
+        const response = await fetch(`http://localhost:5000/delete-faculty/${id}`, {
+          method: 'DELETE',
+        });
+  
+        const result = await response.json();
+  
+        if (response.ok) {
+          toast.success("Successfully deleted faculty");
+          setFacultyList((prev) => prev.filter((faculty) => faculty.id !== id));
+        } else {
+          console.error("Error deleting faculty member:", result.error);
+          toast.error("Error deleting faculty member");
+        }
+      } catch (error) {
+        console.error("Error deleting faculty:", error);
         toast.error("Error deleting faculty member");
-      } else {
-        toast.success("Successfully deleted faculty");
-        setFacultyList((prev) => prev.filter((faculty) => faculty.id !== id));
       }
     }
   };
+  
+
+  // const handleDeleteFaculty = async (id) => {
+  //   if (window.confirm("Are you sure you want to delete this faculty member?")) {
+  //     const { error } = await supabase.from("faculty").delete().eq("id", id);
+  //     if (error) {
+  //       console.error("Error deleting faculty member:", error);
+  //       toast.error("Error deleting faculty member");
+  //     } else {
+  //       toast.success("Successfully deleted faculty");
+  //       setFacultyList((prev) => prev.filter((faculty) => faculty.id !== id));
+  //     }
+  //   }
+  // };
 
   const handleLogout = () => {
     sessionStorage.clear();

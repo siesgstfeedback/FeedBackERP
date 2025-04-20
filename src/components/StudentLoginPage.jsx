@@ -139,6 +139,11 @@ const StudentLoginPage = () => {
       }
 
       const student = data[0];
+      const jwt = data.session.access_token; // This is your JWT token
+      
+      console.log(jwt);
+      // Store JWT in sessionStorage
+      sessionStorage.setItem("jwt", jwt);
 
       // Storing non-sensitive data
       sessionStorage.setItem("userEmail", student.s_email);
