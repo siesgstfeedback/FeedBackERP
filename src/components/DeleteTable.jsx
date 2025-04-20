@@ -1,33 +1,24 @@
-import supabase from "../config/SupabaseClient";
-
 export const DeleteTable = async (tableName) => {
   try {
-    // If no condition is provided, delete all rows
-    // const query = supabase.from(tableName).delete();
-    
-    // Apply condition if provided
-    // if (Object.keys(condition).length > 0) {
-    //   Object.entries(condition).forEach(([key, value]) => {
-    //     query.eq(key, value);
-    //   });
-    // }
+    const response = await fetch("http://localhost:5000/delete-table", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tableName }),
+    });
 
-    const { data, error } = await supabase
-    .from(tableName)
-    .delete()
-    .neq('id','0')
-    ;
-
-    if (error) {
-      console.error(`Error deleting rows from ${tableName}:`, error);
-      return false; // Return false on failure
+    const result = await response.json();
+    if (response.ok && result.success) {
+      return true; // Deletion succeeded
+    } else {
+      console.error(`Error deleting from ${tableName}:`, result.error);
+      return false; // Deletion failed
     }
-
-    
-    return true; // Return true on success
   } catch (err) {
-    console.error("Unexpected error during deletion:", err);
-    return false; // Return false on failure
+    console.error("Network error during deletion:", err);
+    return false; // Network or other error
   }
 };
+
 export default DeleteTable;
