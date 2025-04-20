@@ -62,30 +62,67 @@ const FeedbackAdmin = () => {
     checkIfAdmin();
   }, []);
 
-  const checkIfAdmin = async () => {
-    const username = sessionStorage.getItem("userEmail");
 
-    if (!username) {
-      toast.error("You must be logged in to access the admin panel.");
-      navigate("/faculty-login");
+
+  const checkIfAdmin = async () => {
+    const email = sessionStorage.getItem('userEmail');
+  
+    if (!email) {
+      setLoading(false);
       return;
     }
-
-    const { data, error } = await supabase
-      .from("admin")
-      .select()
-      .eq("a_email", username);
-
-    if (error) {
+  
+    try {
+      const response = await fetch('http://localhost:5000/check-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const result = await response.json();
+      // console.log(result);
+  
+      if (result.isAdmin) {
+        setIsAdmin(true);
+        fetchFacultyNames();
+      } else {
+        console.log("User is not an admin.");
+        navigate("/faculty-login");
+      }
+    } catch (error) {
       console.error("Error checking admin status:", error);
-    } else if (data && data.length > 0) {
-      setIsAdmin(true);
-      fetchFacultyNames();
-    } else {
-      toast.error("Unauthorized Access");
-      navigate("/faculty-login");
     }
+  
+    setLoading(false);
   };
+  
+
+  // const checkIfAdmin = async () => {
+  //   const username = sessionStorage.getItem("userEmail");
+
+  //   if (!username) {
+  //     toast.error("You must be logged in to access the admin panel.");
+  //     navigate("/faculty-login");
+  //     return;
+  //   }
+
+  //   const { data, error } = await supabase
+  //     .from("admin")
+  //     .select()
+  //     .eq("a_email", username);
+
+  //   if (error) {
+  //     console.error("Error checking admin status:", error);
+  //   } else if (data && data.length > 0) {
+  //     setIsAdmin(true);
+  //     fetchFacultyNames();
+  //   } else {
+  //     toast.error("Unauthorized Access");
+  //     navigate("/faculty-login");
+  //   }
+  // };
 
   const fetchFacultyNames = async () => {
     const { data: facultyData, error: facultyError } = await supabase

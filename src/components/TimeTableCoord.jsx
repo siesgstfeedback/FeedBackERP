@@ -129,20 +129,57 @@ const TimeTableCoord = () => {
     checkIfAdmin();
   }, []);
 
+
+
   const checkIfAdmin = async () => {
-    const username = sessionStorage.getItem("userEmail");
-    if (!username) return;
-
-    const { data, error } = await supabase
-      .from("admin")
-      .select()
-      .eq("a_email", username);
-
-    if (error || data.length === 0) {
-      alert("Unauthorized Access");
-      navigate("/login");
+    const email = sessionStorage.getItem('userEmail');
+  
+    if (!email) {
+      setLoading(false);
+      return;
     }
+  
+    try {
+      const response = await fetch('http://localhost:5000/check-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const result = await response.json();
+      // console.log(result);
+  
+      if (result.isAdmin) {
+        setIsAdmin(true);
+        // fetchFacultyData();
+      } else {
+        console.log("User is not an admin.");
+        navigate("/faculty-login");
+      }
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+    }
+  
+    setLoading(false);
   };
+  
+
+  // const checkIfAdmin = async () => {
+  //   const username = sessionStorage.getItem("userEmail");
+  //   if (!username) return;
+
+  //   const { data, error } = await supabase
+  //     .from("admin")
+  //     .select()
+  //     .eq("a_email", username);
+
+  //   if (error || data.length === 0) {
+  //     alert("Unauthorized Access");
+  //     navigate("/login");
+  //   }
+  // };
 
   const handleFetchAllocation = async () => {
     if (!branch || !semester || !division) {

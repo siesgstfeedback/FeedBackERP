@@ -175,29 +175,66 @@ const AddSubject = () => {
     checkIfAdmin();
   }, []);
 
-  const checkIfAdmin = async () => {
-    const username = sessionStorage.getItem("userEmail");
 
-    if (!username) {
+
+  const checkIfAdmin = async () => {
+    const email = sessionStorage.getItem('userEmail');
+  
+    if (!email) {
       setLoading(false);
       return;
     }
-
-    const { data, error } = await supabase
-      .from("admin")
-      .select()
-      .eq("a_email", username);
-
-    if (error) {
+  
+    try {
+      const response = await fetch('http://localhost:5000/check-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const result = await response.json();
+      // console.log(result);
+  
+      if (result.isAdmin) {
+        setIsAdmin(true);
+        fetchSubjectData();
+      } else {
+        console.log("User is not an admin.");
+        navigate("/faculty-login");
+      }
+    } catch (error) {
       console.error("Error checking admin status:", error);
-    } else if (data && data.length > 0) {
-      setIsAdmin(true);
-      fetchSubjectData();
-    } else {
-      console.log("User is not an admin.");
     }
+  
     setLoading(false);
   };
+  
+
+  // const checkIfAdmin = async () => {
+  //   const username = sessionStorage.getItem("userEmail");
+
+  //   if (!username) {
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const { data, error } = await supabase
+  //     .from("admin")
+  //     .select()
+  //     .eq("a_email", username);
+
+  //   if (error) {
+  //     console.error("Error checking admin status:", error);
+  //   } else if (data && data.length > 0) {
+  //     setIsAdmin(true);
+  //     fetchSubjectData();
+  //   } else {
+  //     console.log("User is not an admin.");
+  //   }
+  //   setLoading(false);
+  // };
 
   // const fetchSubjectData = async () => {
   //   const { data, error } = await supabase.from("subject").select();
@@ -208,49 +245,81 @@ const AddSubject = () => {
   //   }
   // };
 
-  const fetchSubjectData = async () => {
-    const batchSize = 1000; // Number of records to fetch per batch
-    let allData = [];
-    let from = 0; // Start index for the current batch
-    let to = batchSize - 1; // End index for the current batch
 
+
+  const fetchSubjectData = async () => {
+    const batchSize = 1000;
+    let allData = [];
+    let page = 1;
+  
     try {
       while (true) {
-        const { data, error, count } = await supabase
-          .from("subject")
-          .select("*", { count: "exact" }) // Fetch exact count along with data
-          .range(from, to);
-
-        if (error) {
-          console.error("Error fetching subject data:", error);
+        const response = await fetch(
+          `http://localhost:5000/subjects?page=${page}&batchSize=${batchSize}`
+        );
+        const result = await response.json();
+        const data = result.data;
+  
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+  
+          if (data.length < batchSize) break; // Last batch
+          page++;
+        } else {
           break;
         }
-
-        if (data && data.length > 0) {
-          allData = [...allData, ...data]; // Append fetched data to the result array
-
-          // Break the loop if fewer records are returned than the batch size
-          if (data.length < batchSize) {
-            break;
-          }
-        } else {
-          break; // Break if no data is returned
-        }
-
-        // Update range for the next batch
-        from += batchSize;
-        to += batchSize;
       }
-
-      setSubjectList(allData); // Set the complete data to the state
+  
+      setSubjectList(allData); // React state
     } catch (error) {
       console.error("Error fetching all subject data:", error);
     }
   };
+  
+  // const fetchSubjectData = async () => {
+  //   const batchSize = 1000; // Number of records to fetch per batch
+  //   let allData = [];
+  //   let from = 0; // Start index for the current batch
+  //   let to = batchSize - 1; // End index for the current batch
+
+  //   try {
+  //     while (true) {
+  //       const { data, error, count } = await supabase
+  //         .from("subject")
+  //         .select("*", { count: "exact" }) // Fetch exact count along with data
+  //         .range(from, to);
+
+  //       if (error) {
+  //         console.error("Error fetching subject data:", error);
+  //         break;
+  //       }
+
+  //       if (data && data.length > 0) {
+  //         allData = [...allData, ...data]; // Append fetched data to the result array
+
+  //         // Break the loop if fewer records are returned than the batch size
+  //         if (data.length < batchSize) {
+  //           break;
+  //         }
+  //       } else {
+  //         break; // Break if no data is returned
+  //       }
+
+  //       // Update range for the next batch
+  //       from += batchSize;
+  //       to += batchSize;
+  //     }
+
+  //     setSubjectList(allData); // Set the complete data to the state
+  //   } catch (error) {
+  //     console.error("Error fetching all subject data:", error);
+  //   }
+  // };
 
   const handleInputChange = ({ target: { name, value } }) => {
     setNewSubject((prev) => ({ ...prev, [name]: value }));
   };
+
 
   const handleAddSubject = async () => {
     if (
@@ -259,12 +328,23 @@ const AddSubject = () => {
       newSubject.subject_branch &&
       newSubject.subject_semester
     ) {
-      const { error } = await supabase.from("subject").insert([newSubject]);
-      if (error) {
-        console.error("Error adding subject:", error);
-        toast.error("Error adding subject:", error);
-      } else {
-        setSubjectList((prev) => [...prev]);
+      try {
+        const response = await fetch("http://localhost:5000/add-subject", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newSubject),
+        });
+  
+        const result = await response.json();
+  
+        if (!response.ok) {
+          toast.error(result.error || "Failed to add subject.");
+          return;
+        }
+  
+        setSubjectList((prev) => [...prev]); // Optional: might be removed
         setNewSubject({
           subject_name: "",
           subject_type: "",
@@ -272,22 +352,76 @@ const AddSubject = () => {
           subject_semester: "",
         });
         toast.success("Subject Added Successfully.");
-        fetchSubjectData();
+        fetchSubjectData(); // Refresh the list
+      } catch (error) {
+        console.error("Error adding subject:", error);
+        toast.error("Error adding subject.");
       }
     }
   };
+  
+
+  // const handleAddSubject = async () => {
+  //   if (
+  //     newSubject.subject_name &&
+  //     newSubject.subject_type &&
+  //     newSubject.subject_branch &&
+  //     newSubject.subject_semester
+  //   ) {
+  //     const { error } = await supabase.from("subject").insert([newSubject]);
+  //     if (error) {
+  //       console.error("Error adding subject:", error);
+  //       toast.error("Error adding subject:", error);
+  //     } else {
+  //       setSubjectList((prev) => [...prev]);
+  //       setNewSubject({
+  //         subject_name: "",
+  //         subject_type: "",
+  //         subject_branch: "",
+  //         subject_semester: "",
+  //       });
+  //       toast.success("Subject Added Successfully.");
+  //       fetchSubjectData();
+  //     }
+  //   }
+  // };
+
 
   const handleDeleteSubject = async (id) => {
     if (window.confirm("Are you sure you want to delete this subject?")) {
-      const { error } = await supabase.from("subject").delete().eq("id", id);
-      if (error) {
-        console.error("Error deleting subject:", error);
-        toast.error("Error deleting subject:", error);
-      } else {
+      try {
+        const response = await fetch(`http://localhost:5000/delete-subject/${id}`, {
+          method: "DELETE",
+        });
+  
+        const result = await response.json();
+  
+        if (!response.ok) {
+          toast.error(result.error || "Failed to delete subject.");
+          return;
+        }
+  
+        toast.success("Subject deleted successfully.");
         setSubjectList((prev) => prev.filter((subject) => subject.id !== id));
+      } catch (error) {
+        console.error("Error deleting subject:", error);
+        toast.error("Error deleting subject.");
       }
     }
   };
+  
+
+  // const handleDeleteSubject = async (id) => {
+  //   if (window.confirm("Are you sure you want to delete this subject?")) {
+  //     const { error } = await supabase.from("subject").delete().eq("id", id);
+  //     if (error) {
+  //       console.error("Error deleting subject:", error);
+  //       toast.error("Error deleting subject:", error);
+  //     } else {
+  //       setSubjectList((prev) => prev.filter((subject) => subject.id !== id));
+  //     }
+  //   }
+  // };
 
   const handleLogout = () => {
     sessionStorage.clear();

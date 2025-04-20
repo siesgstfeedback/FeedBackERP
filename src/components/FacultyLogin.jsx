@@ -118,72 +118,119 @@ const FacultyLogin = () => {
         setShowPassword(!showPassword);
     };
 
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!username || !password || !designation) {
             toast.error("All fields are required!");
             return;
         }
 
+        // sessionStorage.setItem('userEmail', username);
+        // sessionStorage.setItem('userdesignation', designation);
+    
         try {
-            let data, error;
-            if (designation === 'admin') {
-                ({ data, error } = await supabase
-                    .from('admin')
-                    .select('*')
-                    .eq('a_email', username)
-                    .eq('a_password', password));
-            } else if (designation === 'faculty') {
-                ({ data, error } = await supabase
-                    .from('faculty')
-                    .select('*')
-                    .eq('f_email', username)
-                    .eq('f_empid', password));
-            } 
-            else if(designation === 'ttcord') {
-                if(((username==='ttcordfe@sies.edu.in') && (password==='TTCOORDFE'))||((username==='ttcordce@sies.edu.in') && (password==='TTCOORDCE'))||((username==='ttcordit@sies.edu.in') && (password==='TTCOORDIT'))||((username==='ttcordextc@sies.edu.in') && (password==='TTCOORDEXTC'))||((username==='ttcordecs@sies.edu.in') && (password==='TTCOORDECS'))||((username==='ttcordaids@sies.edu.in') && (password==='TTCOORDAIDS'))||((username==='ttcordaiml@sies.edu.in') && (password==='TTCOORDAIML'))||((username==='ttcordiot@sies.edu.in') && (password==='TTCOORDIOT'))||((username==='ttcordmech@sies.edu.in') && (password==='TTCOORDMECH'))){
-                    data = {username: username, designation: designation};
-                    sessionStorage.setItem('userEmail', username);
-                    sessionStorage.setItem('userdesignation', designation);
+            // Send login request to the backend
+            const response = await fetch('http://localhost:5000/api/flogin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password, designation }),
+            });
+    
+            const result = await response.json();
+    
+            if (response.ok) {
+                sessionStorage.setItem('userEmail', username);
+                sessionStorage.setItem('userdesignation', designation);
+    
+                if (designation === 'admin') {
+                    navigate('/admin');
+                } else if (designation === 'faculty') {
+                    sessionStorage.setItem('f_empid', password);
+                    navigate('/faculty');
+                } else if (designation === 'ttcord') {
                     navigate('/ttcoordpanel');
                 }
-                else {
-                    data = undefined;
-                    toast.error("Invalid email or password.");
-                };
+            } else {
+                toast.error(result.error || "Invalid email or password.");
             }
-            
-            else {
-                toast.error("Invalid designation. Please select either admin or faculty.");
-                return;
-            }
-
-            if (error) {
-                throw new Error(error.message);
-            }
-
-            if (data.length === 0) {
-                toast.error("Invalid email or password.");
-                return;
-            }
-
-            sessionStorage.setItem('userEmail', username);
-            sessionStorage.setItem('userdesignation', designation);
-
-            if (designation === 'admin' && data.length > 0) {
-                navigate('/admin');
-            } else if (designation === 'faculty' && data.length > 0) {
-                sessionStorage.setItem('f_empid', password);
-                navigate('/faculty');
-            }
-            
-
         } catch (error) {
-            console.error("Error:", error.message);
+            console.error("Error:", error);
             toast.error("An error occurred. Please try again.");
         }
     };
+    
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+
+    //     if (!username || !password || !designation) {
+    //         toast.error("All fields are required!");
+    //         return;
+    //     }
+
+    //     try {
+    //         let data, error;
+    //         if (designation === 'admin') {
+    //             ({ data, error } = await supabase
+    //                 .from('admin')
+    //                 .select('*')
+    //                 .eq('a_email', username)
+    //                 .eq('a_password', password));
+    //         } else if (designation === 'faculty') {
+    //             ({ data, error } = await supabase
+    //                 .from('faculty')
+    //                 .select('*')
+    //                 .eq('f_email', username)
+    //                 .eq('f_empid', password));
+    //         } 
+    //         else if(designation === 'ttcord') {
+    //             if(((username==='ttcordfe@sies.edu.in') && (password==='TTCOORDFE'))||((username==='ttcordce@sies.edu.in') && (password==='TTCOORDCE'))||((username==='ttcordit@sies.edu.in') && (password==='TTCOORDIT'))||((username==='ttcordextc@sies.edu.in') && (password==='TTCOORDEXTC'))||((username==='ttcordecs@sies.edu.in') && (password==='TTCOORDECS'))||((username==='ttcordaids@sies.edu.in') && (password==='TTCOORDAIDS'))||((username==='ttcordaiml@sies.edu.in') && (password==='TTCOORDAIML'))||((username==='ttcordiot@sies.edu.in') && (password==='TTCOORDIOT'))||((username==='ttcordmech@sies.edu.in') && (password==='TTCOORDMECH'))){
+    //                 data = {username: username, designation: designation};
+    //                 sessionStorage.setItem('userEmail', username);
+    //                 sessionStorage.setItem('userdesignation', designation);
+    //                 navigate('/ttcoordpanel');
+    //             }
+    //             else {
+    //                 data = undefined;
+    //                 toast.error("Invalid email or password.");
+    //             };
+    //         }
+            
+    //         else {
+    //             toast.error("Invalid designation. Please select either admin or faculty.");
+    //             return;
+    //         }
+
+    //         if (error) {
+    //             throw new Error(error.message);
+    //         }
+
+    //         if (data.length === 0) {
+    //             toast.error("Invalid email or password.");
+    //             return;
+    //         }
+
+    //         sessionStorage.setItem('userEmail', username);
+    //         sessionStorage.setItem('userdesignation', designation);
+
+    //         if (designation === 'admin' && data.length > 0) {
+    //             navigate('/admin');
+    //         } else if (designation === 'faculty' && data.length > 0) {
+    //             sessionStorage.setItem('f_empid', password);
+    //             navigate('/faculty');
+    //         }
+            
+
+    //     } catch (error) {
+    //         console.error("Error:", error.message);
+    //         toast.error("An error occurred. Please try again.");
+    //     }
+    // };
 
     const navigateRegister = () => {
         navigate('/');
