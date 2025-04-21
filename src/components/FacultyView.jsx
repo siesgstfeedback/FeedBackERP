@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import { Pie } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -141,28 +141,62 @@ const FacultyView = () => {
     checkIfFaculty();
   }, []);
 
+  // const checkIfFaculty = async () => {
+  //   const username = sessionStorage.getItem("userEmail");
+
+  //   if (!username) {
+  //     toast.error("Please log in as a faculty member.");
+  //     navigate("/faculty-login");
+  //     return;
+  //   }
+
+  //   const { data, error } = await supabase
+  //     .from("faculty")
+  //     .select()
+  //     .eq("f_email", username);
+
+  //   if (error || !data.length) {
+  //     console.error("Error checking faculty status:", error);
+  //     toast.error("Unauthorized access. Please log in.");
+  //     navigate("/faculty-login");
+  //   } else {
+  //     setIsFaculty(true);
+  //     fetchFacultySubjects(data[0].f_empid);
+  //     setEmpid(data[0].f_empid);
+  //   }
+  // };
+
+
   const checkIfFaculty = async () => {
     const username = sessionStorage.getItem("userEmail");
-
+    const navigate = useNavigate();
+  
     if (!username) {
       toast.error("Please log in as a faculty member.");
       navigate("/faculty-login");
       return;
     }
-
-    const { data, error } = await supabase
-      .from("faculty")
-      .select()
-      .eq("f_email", username);
-
-    if (error || !data.length) {
-      console.error("Error checking faculty status:", error);
-      toast.error("Unauthorized access. Please log in.");
-      navigate("/faculty-login");
-    } else {
+  
+    try {
+      const res = await fetch("http://localhost:5000/api/fv-check-faculty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username }),
+      });
+      const result = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(result.error || "Unauthorized access");
+      }
+  
+      // mark as faculty and fetch their subjects
       setIsFaculty(true);
-      fetchFacultySubjects(data[0].f_empid);
-      setEmpid(data[0].f_empid);
+      setEmpid(result.f_empid);
+      fetchFacultySubjects(result.f_empid);
+    } catch (err) {
+      console.error("Error checking faculty status:", err);
+      toast.error(err.message);
+      navigate("/faculty-login");
     }
   };
 
@@ -187,47 +221,63 @@ const FacultyView = () => {
   //   }
   // };
 
-  const fetchFacultySubjects = async (f_empid) => {
+
+
+
+  const fetchFacultySubjects = async (empid) => {
     try {
-      let allSubjects = [];
-      let from = 0;
-      const step = 1000; // Number of rows to fetch in each batch
+      const res = await fetch(`http://localhost:5000/api/fv-faculty/${empid}/subjects/unique`);
+      const data = await res.json();
   
-      while (true) {
-        const { data, error } = await supabase
-          .from("f_allocation")
-          .select()
-          .eq("f_empid", f_empid)
-          .range(from, from + step - 1); // Fetch data in batches of 1000
-  
-        if (error) {
-          console.error("Error fetching assigned subjects:", error);
-          break;
-        }
-  
-        if (data.length === 0) {
-          // Exit the loop if no more data is available
-          break;
-        }
-  
-        allSubjects = [...allSubjects, ...data];
-        from += step; // Increment the range
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch assigned subjects");
       }
-  
-      // Use a Set to filter unique subjects
-      const uniqueSubjects = Array.from(
-        new Set(allSubjects.map((subject) => subject.subject_name))
-      ).map((subjectName) =>
-        allSubjects.find((subject) => subject.subject_name === subjectName)
-      );
-  
-      setFacultySubjects(uniqueSubjects || []);
-    } catch (error) {
-      console.error("Unexpected error while fetching subjects:", error);
+      setFacultySubjects(data);
+    } catch (err) {
+      console.error("Error fetching assigned subjects:", err);
+      toast.error("Failed to load subjects");
     }
   };
+  // const fetchFacultySubjects = async (f_empid) => {
+  //   try {
+  //     let allSubjects = [];
+  //     let from = 0;
+  //     const step = 1000; // Number of rows to fetch in each batch
   
-
+  //     while (true) {
+  //       const { data, error } = await supabase
+  //         .from("f_allocation")
+  //         .select()
+  //         .eq("f_empid", f_empid)
+  //         .range(from, from + step - 1); // Fetch data in batches of 1000
+  
+  //       if (error) {
+  //         console.error("Error fetching assigned subjects:", error);
+  //         break;
+  //       }
+  
+  //       if (data.length === 0) {
+  //         // Exit the loop if no more data is available
+  //         break;
+  //       }
+  
+  //       allSubjects = [...allSubjects, ...data];
+  //       from += step; // Increment the range
+  //     }
+  
+  //     // Use a Set to filter unique subjects
+  //     const uniqueSubjects = Array.from(
+  //       new Set(allSubjects.map((subject) => subject.subject_name))
+  //     ).map((subjectName) =>
+  //       allSubjects.find((subject) => subject.subject_name === subjectName)
+  //     );
+  
+  //     setFacultySubjects(uniqueSubjects || []);
+  //   } catch (error) {
+  //     console.error("Unexpected error while fetching subjects:", error);
+  //   }
+  // };
+  
   const handleViewFeedback = async () => {
     if (!selectedSubject) {
       toast.error("Please select a subject.");
@@ -235,68 +285,27 @@ const FacultyView = () => {
     }
   
     try {
-      let allFeedback = [];
-      let from = 0;
-      const step = 1000; // Number of rows to fetch in each batch
-  
-      while (true) {
-        const { data, error } = await supabase
-          .from("feedback")
-          .select("q1, q2, q3, q4, q5")
-          .eq("f_empid1", empid)
-          .eq("f_subject", selectedSubject)
-          .range(from, from + step - 1); // Fetch data in batches of 1000
-  
-        if (error) {
-          console.error("Error fetching feedback data:", error);
-          toast.error("Failed to fetch feedback data.");
-          return;
-        }
-  
-        if (data.length === 0) {
-          // Exit the loop if no more data is available
-          break;
-        }
-  
-        allFeedback = [...allFeedback, ...data];
-        from += step; // Increment the range
-      }
-  
-      if (allFeedback.length === 0) {
-        toast.error("No feedback data available for the selected subject.");
-        return;
-      }
-  
-      // Calculate ratings
-      const ratings = [0, 0, 0, 0, 0];
-      const totalRatings = allFeedback.length * 5; // 5 questions per feedback
-      let weightedSum = 0; // Sum for calculating average
-  
-      allFeedback.forEach((feedback) => {
-        for (let i = 0; i < 5; i++) {
-          const ratingValue = feedback[`q${i + 1}`]; // Accessing ratings dynamically
-          if (ratingValue) {
-            ratings[ratingValue - 1]++; // Increment the corresponding rating
-            weightedSum += ratingValue; // Add to weighted sum for average calculation
-          }
-        }
+      const res = await fetch("http://localhost:5000/api/feedback-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          empid,
+          subject: selectedSubject,
+        }),
       });
+      const result = await res.json();
   
-      // Calculate percentage for each rating
-      const percentages = ratings.map((rating) =>
-        ((rating / totalRatings) * 100).toFixed(2)
-      );
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to fetch feedback data");
+      }
   
-      // Calculate average rating
-      const average = (weightedSum / totalRatings).toFixed(2);
-  
-      // Prepare chart data
+      // Build chart data exactly as before
       setFeedbackData({
         labels: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
         datasets: [
           {
             label: "Feedback Ratings",
-            data: ratings,
+            data: result.counts,
             backgroundColor: [
               "rgba(255, 99, 132, 0.6)",
               "rgba(255, 159, 64, 0.6)",
@@ -308,14 +317,101 @@ const FacultyView = () => {
         ],
       });
   
-      // Set percentages and average rating for display
-      setFeedbackPercentages(percentages);
-      setAverageRating(average);
-    } catch (error) {
-      console.error("Unexpected error while handling feedback view:", error);
+      setFeedbackPercentages(result.percentages);
+      setAverageRating(result.average);
+    } catch (err) {
+      console.error("Unexpected error while handling feedback view:", err);
       toast.error("An unexpected error occurred.");
     }
   };
+  // const handleViewFeedback = async () => {
+  //   if (!selectedSubject) {
+  //     toast.error("Please select a subject.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     let allFeedback = [];
+  //     let from = 0;
+  //     const step = 1000; // Number of rows to fetch in each batch
+  
+  //     while (true) {
+  //       const { data, error } = await supabase
+  //         .from("feedback")
+  //         .select("q1, q2, q3, q4, q5")
+  //         .eq("f_empid1", empid)
+  //         .eq("f_subject", selectedSubject)
+  //         .range(from, from + step - 1); // Fetch data in batches of 1000
+  
+  //       if (error) {
+  //         console.error("Error fetching feedback data:", error);
+  //         toast.error("Failed to fetch feedback data.");
+  //         return;
+  //       }
+  
+  //       if (data.length === 0) {
+  //         // Exit the loop if no more data is available
+  //         break;
+  //       }
+  
+  //       allFeedback = [...allFeedback, ...data];
+  //       from += step; // Increment the range
+  //     }
+  
+  //     if (allFeedback.length === 0) {
+  //       toast.error("No feedback data available for the selected subject.");
+  //       return;
+  //     }
+  
+  //     // Calculate ratings
+  //     const ratings = [0, 0, 0, 0, 0];
+  //     const totalRatings = allFeedback.length * 5; // 5 questions per feedback
+  //     let weightedSum = 0; // Sum for calculating average
+  
+  //     allFeedback.forEach((feedback) => {
+  //       for (let i = 0; i < 5; i++) {
+  //         const ratingValue = feedback[`q${i + 1}`]; // Accessing ratings dynamically
+  //         if (ratingValue) {
+  //           ratings[ratingValue - 1]++; // Increment the corresponding rating
+  //           weightedSum += ratingValue; // Add to weighted sum for average calculation
+  //         }
+  //       }
+  //     });
+  
+  //     // Calculate percentage for each rating
+  //     const percentages = ratings.map((rating) =>
+  //       ((rating / totalRatings) * 100).toFixed(2)
+  //     );
+  
+  //     // Calculate average rating
+  //     const average = (weightedSum / totalRatings).toFixed(2);
+  
+  //     // Prepare chart data
+  //     setFeedbackData({
+  //       labels: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
+  //       datasets: [
+  //         {
+  //           label: "Feedback Ratings",
+  //           data: ratings,
+  //           backgroundColor: [
+  //             "rgba(255, 99, 132, 0.6)",
+  //             "rgba(255, 159, 64, 0.6)",
+  //             "rgba(255, 206, 86, 0.6)",
+  //             "rgba(75, 192, 192, 0.6)",
+  //             "rgba(54, 162, 235, 0.6)",
+  //           ],
+  //         },
+  //       ],
+  //     });
+  
+  //     // Set percentages and average rating for display
+  //     setFeedbackPercentages(percentages);
+  //     setAverageRating(average);
+  //   } catch (error) {
+  //     console.error("Unexpected error while handling feedback view:", error);
+  //     toast.error("An unexpected error occurred.");
+  //   }
+  // };
   
 
   // const handleViewFeedback = async () => {

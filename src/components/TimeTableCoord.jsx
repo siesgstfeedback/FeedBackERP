@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -181,50 +181,79 @@ const TimeTableCoord = () => {
   //   }
   // };
 
+
+
   const handleFetchAllocation = async () => {
     if (!branch || !semester || !division) {
       toast.error("Please select branch, semester, and division");
       return;
     }
-
+  
     setLoading(true);
-    
-    // Fetch allocations from `f_allocation` table including batch information
-    const { data: allocationData, error: allocationError } = await supabase
-      .from("f_allocation")
-      .select("subject_name, f_empid, batch")
-      .eq("subject_branch", branch)
-      .eq("subject_semester", semester)
-      .eq("division", division);
-
-    if (allocationError) {
-      console.error("Error fetching allocation:", allocationError);
+  
+    try {
+      const res = await fetch(`/api/tt-faculty-allocation?branch=${branch}&semester=${semester}&division=${division}`);
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch allocation");
+      }
+  
+      setFacultyAllocation(data);
+      toast.success("Allocation data fetched successfully");
+    } catch (error) {
+      console.error("Error fetching allocation:", error);
       toast.error("Error fetching data");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Fetch faculty names for each `f_empid` and include batch
-    const facultyNames = await Promise.all(
-      allocationData.map(async (allocation) => {
-        const { data: facultyData, error: facultyError } = await supabase
-          .from("faculty")
-          .select("f_name")
-          .eq("f_empid", allocation.f_empid)
-          .single();
-        
-        if (facultyError) {
-          console.error("Error fetching faculty name:", facultyError);
-          return { ...allocation, facultyName: "Unknown" };
-        }
-        
-        return { ...allocation, facultyName: facultyData.f_name };
-      })
-    );
-
-    setFacultyAllocation(facultyNames);
-    setLoading(false);
   };
+  
+
+  // const handleFetchAllocation = async () => {
+  //   if (!branch || !semester || !division) {
+  //     toast.error("Please select branch, semester, and division");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+    
+  //   // Fetch allocations from `f_allocation` table including batch information
+  //   const { data: allocationData, error: allocationError } = await supabase
+  //     .from("f_allocation")
+  //     .select("subject_name, f_empid, batch")
+  //     .eq("subject_branch", branch)
+  //     .eq("subject_semester", semester)
+  //     .eq("division", division);
+
+  //   if (allocationError) {
+  //     console.error("Error fetching allocation:", allocationError);
+  //     toast.error("Error fetching data");
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   // Fetch faculty names for each `f_empid` and include batch
+  //   const facultyNames = await Promise.all(
+  //     allocationData.map(async (allocation) => {
+  //       const { data: facultyData, error: facultyError } = await supabase
+  //         .from("faculty")
+  //         .select("f_name")
+  //         .eq("f_empid", allocation.f_empid)
+  //         .single();
+        
+  //       if (facultyError) {
+  //         console.error("Error fetching faculty name:", facultyError);
+  //         return { ...allocation, facultyName: "Unknown" };
+  //       }
+        
+  //       return { ...allocation, facultyName: facultyData.f_name };
+  //     })
+  //   );
+
+  //   setFacultyAllocation(facultyNames);
+  //   setLoading(false);
+  // };
 
   const handleLogout = () => {
     sessionStorage.clear();

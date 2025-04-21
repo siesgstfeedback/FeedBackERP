@@ -5,7 +5,7 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useNavigate } from "react-router-dom";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -105,53 +105,93 @@ const StudentLoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the default form submission
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault(); // Prevent the default form submission
 
+  //   // Basic validation
+  //   if (!email || !password) {
+  //     toast.error("All fields are required!");
+  //     return;
+  //   }
+
+  //   // Additional validation for email format
+  //   const emailPattern = /^[^\s@]+@gst\.sies\.edu\.in$/;
+  //   if (!emailPattern.test(email)) {
+  //     toast.error("Please enter a valid college email address");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Fetching user data from Supabase
+  //     const { data, error } = await supabase
+  //       .from("student")
+  //       .select("*")
+  //       .eq("s_email", email)
+  //       .eq("s_prn", password);
+
+  //     if (error) {
+  //       throw new Error(error.message);
+  //     }
+
+  //     if (data.length === 0) {
+  //       toast.error("Invalid email or password.");
+  //       return;
+  //     }
+
+  //     const student = data[0];
+  //     const jwt = data.session.access_token; // This is your JWT token
+      
+  //     console.log(jwt);
+  //     // Store JWT in sessionStorage
+  //     sessionStorage.setItem("jwt", jwt);
+
+  //     // Storing non-sensitive data
+  //     sessionStorage.setItem("userEmail", student.s_email);
+  //     sessionStorage.setItem("userPRN", student.s_prn);
+  //     navigate("/student-profile");
+  //     // console.log(data);
+  //   } catch (error) {
+  //     console.error("Error:", error.message);
+  //     toast.error("An error occurred. Please try again.");
+  //   }
+  // };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
     // Basic validation
     if (!email || !password) {
       toast.error("All fields are required!");
       return;
     }
-
-    // Additional validation for email format
+    // Email format check
     const emailPattern = /^[^\s@]+@gst\.sies\.edu\.in$/;
     if (!emailPattern.test(email)) {
       toast.error("Please enter a valid college email address");
       return;
     }
-
+  
     try {
-      // Fetching user data from Supabase
-      const { data, error } = await supabase
-        .from("student")
-        .select("*")
-        .eq("s_email", email)
-        .eq("s_prn", password);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data.length === 0) {
-        toast.error("Invalid email or password.");
+      const res = await fetch("http://localhost:5000/api/student-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await res.json();
+  
+      if (!res.ok) {
+        // show backend error message
+        toast.error(result.error || "Invalid email or password.");
         return;
       }
-
-      const student = data[0];
-      const jwt = data.session.access_token; // This is your JWT token
-      
-      console.log(jwt);
-      // Store JWT in sessionStorage
-      sessionStorage.setItem("jwt", jwt);
-
-      // Storing non-sensitive data
+  
+      const student = result.student;
+      // store non‐sensitive data
       sessionStorage.setItem("userEmail", student.s_email);
       sessionStorage.setItem("userPRN", student.s_prn);
       navigate("/student-profile");
-      // console.log(data);
-    } catch (error) {
-      console.error("Error:", error.message);
+    } catch (err) {
+      console.error("Error:", err);
       toast.error("An error occurred. Please try again.");
     }
   };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import Header from "./Header";
 import Footer from "./Footer";
 import { toast, ToastContainer } from "react-toastify";
@@ -173,68 +173,93 @@ const NotFilledStudents = () => {
   //   }
   // };
 
-  const fetchNotFilledStudents = async () => {
-    if (!branch || !year) {
-      toast.error("Please select both branch and year.");
-      return;
+  // const fetchNotFilledStudents = async () => {
+  //   if (!branch || !year) {
+  //     toast.error("Please select both branch and year.");
+  //     return;
+  //   }
+
+  //   try {
+  //     let studentPRNs = [];
+  //     let offset = 0;
+  //     const limit = 1000;
+
+  //     // Fetch all students from the selected branch and year in batches
+  //     while (true) {
+  //       const { data: students, error: studentError } = await supabase
+  //         .from("student")
+  //         .select("s_prn")
+  //         .eq("s_branch", branch)
+  //         .eq("s_year", year)
+  //         .range(offset, offset + limit - 1); // Fetch rows in batches of 1000
+
+  //       if (studentError) throw studentError;
+  //       if (students.length === 0) break; // No more data to fetch
+
+  //       studentPRNs = [
+  //         ...studentPRNs,
+  //         ...students.map((student) => student.s_prn),
+  //       ];
+  //       offset += limit;
+  //     }
+
+  //     let feedbackPRNs = [];
+  //     offset = 0;
+
+  //     // Fetch all feedback entries in batches
+  //     while (true) {
+  //       const { data: feedback, error: feedbackError } = await supabase
+  //         .from("feedback")
+  //         .select("s_prn")
+  //         .eq("f_branch", branch)
+  //         .eq("f_year", year)
+  //         .range(offset, offset + limit - 1);
+
+  //       if (feedbackError) throw feedbackError;
+  //       if (feedback.length === 0) break;
+
+  //       feedbackPRNs = [
+  //         ...feedbackPRNs,
+  //         ...feedback.map((entry) => entry.s_prn),
+  //       ];
+  //       offset += limit;
+  //     }
+
+  //     // Filter out students who have not submitted feedback
+  //     const notFilledPRNs = studentPRNs.filter(
+  //       (prn) => !feedbackPRNs.includes(prn)
+  //     );
+
+  //     setStudentsWithoutFeedback(notFilledPRNs);
+  //   } catch (error) {
+  //     console.error("Error fetching not filled students:", error);
+  //   }
+  // };
+
+
+  
+const fetchNotFilledStudents = async () => {
+  if (!branch || !year) {
+    toast.error("Please select both branch and year.");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/not-filled-students?branch=${encodeURIComponent(branch)}&year=${encodeURIComponent(year)}`
+    );
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to fetch students");
     }
 
-    try {
-      let studentPRNs = [];
-      let offset = 0;
-      const limit = 1000;
-
-      // Fetch all students from the selected branch and year in batches
-      while (true) {
-        const { data: students, error: studentError } = await supabase
-          .from("student")
-          .select("s_prn")
-          .eq("s_branch", branch)
-          .eq("s_year", year)
-          .range(offset, offset + limit - 1); // Fetch rows in batches of 1000
-
-        if (studentError) throw studentError;
-        if (students.length === 0) break; // No more data to fetch
-
-        studentPRNs = [
-          ...studentPRNs,
-          ...students.map((student) => student.s_prn),
-        ];
-        offset += limit;
-      }
-
-      let feedbackPRNs = [];
-      offset = 0;
-
-      // Fetch all feedback entries in batches
-      while (true) {
-        const { data: feedback, error: feedbackError } = await supabase
-          .from("feedback")
-          .select("s_prn")
-          .eq("f_branch", branch)
-          .eq("f_year", year)
-          .range(offset, offset + limit - 1);
-
-        if (feedbackError) throw feedbackError;
-        if (feedback.length === 0) break;
-
-        feedbackPRNs = [
-          ...feedbackPRNs,
-          ...feedback.map((entry) => entry.s_prn),
-        ];
-        offset += limit;
-      }
-
-      // Filter out students who have not submitted feedback
-      const notFilledPRNs = studentPRNs.filter(
-        (prn) => !feedbackPRNs.includes(prn)
-      );
-
-      setStudentsWithoutFeedback(notFilledPRNs);
-    } catch (error) {
-      console.error("Error fetching not filled students:", error);
-    }
-  };
+    setStudentsWithoutFeedback(data); // the array of PRNs
+  } catch (err) {
+    console.error("Error fetching not filled students:", err);
+    toast.error("Error fetching students who haven't submitted feedback.");
+  }
+};
 
   if (!isAdmin) {
     return null;

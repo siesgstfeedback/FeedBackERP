@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import logo from "../assets/sies_gst_logo.png";
 import styled from "styled-components";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
+import { ToastContainer, toast } from "react-toastify";
 
 const Logo = styled.img`
   max-width: 170px;
@@ -56,23 +57,39 @@ const Title = styled.h1`
 `;
 
 const Header = () => {
-  const [headerText, setHeaderText] = useState("Feedback 2024");
+  const [headerText, setHeaderText] = useState("Feedback 2025");
 
   useEffect(() => {
     fetchHeaderText();
   }, []);
 
-  const fetchHeaderText = async () => {
-    const { data, error } = await supabase
-      .from("settings")
-      .select("feedback_header_text")
-      .eq("id", 1)
-      .single();
+  // const fetchHeaderText = async () => {
+  //   const { data, error } = await supabase
+  //     .from("settings")
+  //     .select("feedback_header_text")
+  //     .eq("id", 1)
+  //     .single();
 
-    if (error) {
-      console.error("Error fetching header text:", error);
-    } else if (data) {
-      setHeaderText(data.feedback_header_text || "Feedback 2024");
+  //   if (error) {
+  //     console.error("Error fetching header text:", error);
+  //   } else if (data) {
+  //     setHeaderText(data.feedback_header_text || "Feedback 2024");
+  //   }
+  // };
+
+  const fetchHeaderText = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/settings/header-text");
+      const result = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to fetch header text");
+      }
+  
+      setHeaderText(result.feedback_header_text || "Feedback 2025");
+    } catch (err) {
+      console.error("Error fetching header text:", err);
+      toast.error("Error fetching header text");
     }
   };
 

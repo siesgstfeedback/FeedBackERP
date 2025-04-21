@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver"; // For downloading CSV
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import Header from "./Header";
 import Footer from "./Footer";
 import { ToastContainer, toast } from "react-toastify";
@@ -124,24 +124,107 @@ const FeedbackAdmin = () => {
   //   }
   // };
 
+
   const fetchFacultyNames = async () => {
-    const { data: facultyData, error: facultyError } = await supabase
-      .from("faculty")
-      .select("f_empid, f_name");
-
-    if (facultyError) {
-      console.error("Error fetching faculty names:", facultyError);
+    try {
+      const res = await fetch("http://localhost:5000/api/fetchfaculties"); // update with your actual backend URL
+      if (!res.ok) throw new Error("Network response was not ok");
+  
+      const facultyData = await res.json();
+  
+      const map = {};
+      facultyData.forEach((faculty) => {
+        map[faculty.f_empid] = faculty.f_name;
+      });
+  
+      setFacultyMap(map);
+    } catch (error) {
+      console.error("Error fetching faculty names:", error);
       toast.error("Error fetching faculty names.");
-      return;
     }
-
-    const map = {};
-    facultyData.forEach((faculty) => {
-      map[faculty.f_empid] = faculty.f_name;
-    });
-
-    setFacultyMap(map);
   };
+  
+  // const fetchFacultyNames = async () => {
+  //   const { data: facultyData, error: facultyError } = await supabase
+  //     .from("faculty")
+  //     .select("f_empid, f_name");
+
+  //   if (facultyError) {
+  //     console.error("Error fetching faculty names:", facultyError);
+  //     toast.error("Error fetching faculty names.");
+  //     return;
+  //   }
+
+  //   const map = {};
+  //   facultyData.forEach((faculty) => {
+  //     map[faculty.f_empid] = faculty.f_name;
+  //   });
+
+  //   setFacultyMap(map);
+  // };
+
+  // const fetchAllFeedback = async () => {
+  //   if (!branch || !year) {
+  //     toast.error("Please select both branch and year.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("feedback")
+  //       .select("f_empid1, f_subject, q1, q2, q3, q4, q5, q6, q7")
+  //       .eq("f_branch", branch)
+  //       .eq("f_year", year);
+  
+  //     if (error) {
+  //       throw error;
+  //     }
+  
+  //     const uniqueFeedbackMap = new Map();
+  
+  //     data.forEach((row) => {
+  //       const key = `${row.f_empid1}-${row.f_subject}`;
+  //       if (!uniqueFeedbackMap.has(key)) {
+  //         uniqueFeedbackMap.set(key, { ...row, count: 1 });
+  //       } else {
+  //         const existingRow = uniqueFeedbackMap.get(key);
+  //         existingRow.q1 += row.q1;
+  //         existingRow.q2 += row.q2;
+  //         existingRow.q3 += row.q3;
+  //         existingRow.q4 += row.q4;
+  //         existingRow.q5 += row.q5;
+  //         existingRow.q6 += row.q6;
+  //         existingRow.q7 += row.q7;
+  //         existingRow.count += 1;
+  //         uniqueFeedbackMap.set(key, existingRow);
+  //       }
+  //     });
+  
+  //     const uniqueFeedbackData = Array.from(uniqueFeedbackMap.values()).map(
+  //       (row) => {
+  //         return {
+  //           ...row,
+  //           q2: (row.q2 / row.count).toFixed(3),
+  //           q1: (row.q1 / row.count).toFixed(3),
+  //           q3: (row.q3 / row.count).toFixed(3),
+  //           q4: (row.q4 / row.count).toFixed(3),
+  //           q5: (row.q5 / row.count).toFixed(3),
+  //           q6: (row.q6 / row.count).toFixed(3),
+  //           q7: (row.q7 / row.count).toFixed(3),
+  //           facultyName: facultyMap[row.f_empid1] || "Unknown Faculty",
+  //           subjectName: row.f_subject,
+  //         };
+  //       }
+  //     );
+  
+  //     setFeedbackData(uniqueFeedbackData);
+  //     toast.success("Feedback data fetched successfully!");
+  //   } catch (error) {
+  //     console.error("Error fetching feedback:", error);
+  //     toast.error("Error fetching feedback. Please try again later.");
+  //   }
+  // };
+
 
   const fetchAllFeedback = async () => {
     if (!branch || !year) {
@@ -150,60 +233,27 @@ const FeedbackAdmin = () => {
     }
   
     try {
-      const { data, error } = await supabase
-        .from("feedback")
-        .select("f_empid1, f_subject, q1, q2, q3, q4, q5, q6, q7")
-        .eq("f_branch", branch)
-        .eq("f_year", year);
-  
-      if (error) {
-        throw error;
-      }
-  
-      const uniqueFeedbackMap = new Map();
-  
-      data.forEach((row) => {
-        const key = `${row.f_empid1}-${row.f_subject}`;
-        if (!uniqueFeedbackMap.has(key)) {
-          uniqueFeedbackMap.set(key, { ...row, count: 1 });
-        } else {
-          const existingRow = uniqueFeedbackMap.get(key);
-          existingRow.q1 += row.q1;
-          existingRow.q2 += row.q2;
-          existingRow.q3 += row.q3;
-          existingRow.q4 += row.q4;
-          existingRow.q5 += row.q5;
-          existingRow.q6 += row.q6;
-          existingRow.q7 += row.q7;
-          existingRow.count += 1;
-          uniqueFeedbackMap.set(key, existingRow);
-        }
-      });
-  
-      const uniqueFeedbackData = Array.from(uniqueFeedbackMap.values()).map(
-        (row) => {
-          return {
-            ...row,
-            q2: (row.q2 / row.count).toFixed(3),
-            q1: (row.q1 / row.count).toFixed(3),
-            q3: (row.q3 / row.count).toFixed(3),
-            q4: (row.q4 / row.count).toFixed(3),
-            q5: (row.q5 / row.count).toFixed(3),
-            q6: (row.q6 / row.count).toFixed(3),
-            q7: (row.q7 / row.count).toFixed(3),
-            facultyName: facultyMap[row.f_empid1] || "Unknown Faculty",
-            subjectName: row.f_subject,
-          };
-        }
+      const res = await fetch(
+        `http://localhost:5000/api/feedback?branch=${branch}&year=${year}`
       );
+      if (!res.ok) throw new Error("Failed to fetch");
   
-      setFeedbackData(uniqueFeedbackData);
+      const data = await res.json();
+  
+      const processedData = data.map((row) => ({
+        ...row,
+        facultyName: facultyMap[row.f_empid1] || "Unknown Faculty",
+        subjectName: row.f_subject,
+      }));
+  
+      setFeedbackData(processedData);
       toast.success("Feedback data fetched successfully!");
     } catch (error) {
       console.error("Error fetching feedback:", error);
       toast.error("Error fetching feedback. Please try again later.");
     }
   };
+  
 
   // const downloadCSV = (data) => {
   //   if (data.length === 0) {
@@ -247,7 +297,9 @@ const FeedbackAdmin = () => {
   //   saveAs(blob, "feedback_data.csv");
   // };
 
-  const downloadCSV = () => {
+  const downloadCSV = async() => {
+    await fetchAllFeedback(); 
+
     if (feedbackData.length === 0) {
       toast.error("No data available to download.");
       return;
@@ -332,7 +384,6 @@ const FeedbackAdmin = () => {
           <option value="ME">ME</option>
         </Select>
 
-        <Button onClick={fetchAllFeedback}>Fetch Data</Button>
         <Button onClick={() => { downloadCSV(); }}>Download CSV</Button>
       </Container>
 

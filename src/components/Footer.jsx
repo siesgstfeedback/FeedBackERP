@@ -19,7 +19,7 @@ const Div = styled.footer`
 const Footer = () => {
   return (
     <Div>
-      © 2025 SIES Graduate School Of Technology. All Rights Reserved.
+      {/* © 2025 SIES Graduate School Of Technology. All Rights Reserved. */}
     </Div>
   );
 };

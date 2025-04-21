@@ -3,7 +3,7 @@ import profilepic from "../assets/Profile.png";
 import styled from "styled-components";
 import Header from "./Header";
 import Footer from "./Footer";
-import supabase from "../config/SupabaseClient";
+// import supabase from "../config/SupabaseClient";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -209,68 +209,112 @@ const InfoDiv = styled.div`
   }
 `;
 
+// const fetchRecord = async (email, prn) => {
+//   try {
+//     const { data, error } = await supabase
+//       .from("student")
+//       .select(
+//         "s_name, s_prn, s_year, s_semester, s_branch, s_division, s_batch, s_email"
+//       )
+//       .eq("s_email", email)
+//       .eq("s_prn", prn);
+
+//     if (error) {
+//       throw new Error(error.message);
+//     }
+
+//     if (data.length === 0) {
+//       throw new Error("No student record found.");
+//     }
+
+//     const student = data[0];
+//     return {
+//       name: student.s_name,
+//       prn: student.s_prn,
+//       year: student.s_year,
+//       semester: student.s_semester,
+//       branch: student.s_branch,
+//       division: student.s_division,
+//       batch: student.s_batch,
+//       email: student.s_email,
+//     };
+//   } catch (error) {
+//     console.error("Error fetching record:", error.message);
+//     return { error: error.message };
+//   }
+// };
+
 const fetchRecord = async (email, prn) => {
   try {
-    const { data, error } = await supabase
-      .from("student")
-      .select(
-        "s_name, s_prn, s_year, s_semester, s_branch, s_division, s_batch, s_email"
-      )
-      .eq("s_email", email)
-      .eq("s_prn", prn);
+    const res = await fetch("http://localhost:5000/api/student-record", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, prn }),
+    });
+    const result = await res.json();
 
-    if (error) {
-      throw new Error(error.message);
+    if (!res.ok) {
+      // show server‐side validation or fetch errors
+      throw new Error(result.error || "Failed to fetch student record");
     }
 
-    if (data.length === 0) {
-      throw new Error("No student record found.");
-    }
-
-    const student = data[0];
-    return {
-      name: student.s_name,
-      prn: student.s_prn,
-      year: student.s_year,
-      semester: student.s_semester,
-      branch: student.s_branch,
-      division: student.s_division,
-      batch: student.s_batch,
-      email: student.s_email,
-    };
-  } catch (error) {
-    console.error("Error fetching record:", error.message);
-    return { error: error.message };
+    // result.student has your mapped fields
+    return result.student;
+  } catch (err) {
+    console.error("Error fetching record:", err);
+    toast.error(err.message);
+    return { error: err.message };
   }
 };
 
+// const updateRecord = async (updatedData) => {
+//   try {
+//     const { error } = await supabase
+//       .from("student")
+//       .update({
+//         s_name: updatedData.name,
+//         s_prn: updatedData.prn,
+//         s_year: updatedData.year,
+//         s_semester: updatedData.semester,
+//         s_branch: updatedData.branch,
+//         s_division: updatedData.division,
+//         s_batch: updatedData.batch,
+//         s_email: updatedData.email,
+//       })
+//       .eq("s_email", updatedData.email)
+//       .eq("s_prn", updatedData.prn);
+
+//     if (error) {
+//       throw new Error(error.message);
+//     }
+
+//     return { success: true };
+//   } catch (error) {
+//     console.error("Error updating record:", error.message);
+//     return { error: error.message };
+//   }
+// };
 const updateRecord = async (updatedData) => {
   try {
-    const { error } = await supabase
-      .from("student")
-      .update({
-        s_name: updatedData.name,
-        s_prn: updatedData.prn,
-        s_year: updatedData.year,
-        s_semester: updatedData.semester,
-        s_branch: updatedData.branch,
-        s_division: updatedData.division,
-        s_batch: updatedData.batch,
-        s_email: updatedData.email,
-      })
-      .eq("s_email", updatedData.email)
-      .eq("s_prn", updatedData.prn);
+    const res = await fetch("http://localhost:5000/api/student-record", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedData),
+    });
+    const result = await res.json();
 
-    if (error) {
-      throw new Error(error.message);
+    if (!res.ok) {
+      throw new Error(result.error || "Failed to update record");
     }
 
     return { success: true };
   } catch (error) {
     console.error("Error updating record:", error.message);
+    toast.error(error.message);
     return { error: error.message };
   }
 };
+
 
 const StudentProfile = () => {
   const [student, setStudent] = useState(null);
@@ -339,22 +383,42 @@ const StudentProfile = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from("settings")
-        .select("student_editing, student_feedback")
-        .eq("id", 1) // Assuming you're updating the row with id 1
-        .single(); // Fetch a single row
-
-      if (error) {
-        throw new Error(error.message);
+      const res = await fetch("http://localhost:5000/api/sp-settings");
+      const result = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to fetch settings");
       }
-
-      return data;
+  
+      return {
+        student_editing: result.student_editing,
+        student_feedback: result.student_feedback,
+      };
     } catch (error) {
       console.error("Error fetching settings:", error.message);
+      toast.error("Error fetching settings");
       return { error: error.message };
     }
   };
+
+  // const fetchSettings = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("settings")
+  //       .select("student_editing, student_feedback")
+  //       .eq("id", 1) // Assuming you're updating the row with id 1
+  //       .single(); // Fetch a single row
+
+  //     if (error) {
+  //       throw new Error(error.message);
+  //     }
+
+  //     return data;
+  //   } catch (error) {
+  //     console.error("Error fetching settings:", error.message);
+  //     return { error: error.message };
+  //   }
+  // };
 
   const [settings, setSettings] = useState({ editing: true, feedback: true });
 
