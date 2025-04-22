@@ -192,7 +192,7 @@ const TimeTableCoord = () => {
     setLoading(true);
   
     try {
-      const res = await fetch(`/api/tt-faculty-allocation?branch=${branch}&semester=${semester}&division=${division}`);
+      const res = await fetch(`http://localhost:5000/api/tt-faculty-allocation?branch=${branch}&semester=${semester}&division=${division}`);
       const data = await res.json();
   
       if (!res.ok) {

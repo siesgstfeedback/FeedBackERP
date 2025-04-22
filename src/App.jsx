@@ -20,16 +20,32 @@ function App() {
   const [settings, setSettings] = useState({ feedback: false, displayFacultyFeedback: false });
 
   // Function to fetch settings
+  // const fetchSettings = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('settings')
+  //       .select('student_feedback, display_facultyfeedback')
+  //       .eq('id', 1) // Adjust the id as necessary
+  //       .single();
+
+  //     if (error) throw new Error(error.message);
+  //     setSettings({ feedback: data.student_feedback, displayFacultyFeedback: data.display_facultyfeedback });
+  //   } catch (error) {
+  //     console.error("Error fetching settings:", error.message);
+  //   }
+  // };
+
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('student_feedback, display_facultyfeedback')
-        .eq('id', 1) // Adjust the id as necessary
-        .single();
-
-      if (error) throw new Error(error.message);
-      setSettings({ feedback: data.student_feedback, displayFacultyFeedback: data.display_facultyfeedback });
+      const res = await fetch("http://localhost:5000/api/settings");
+      const data = await res.json();
+  
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+  
+      setSettings({
+        feedback: data.student_feedback,
+        displayFacultyFeedback: data.display_facultyfeedback,
+      });
     } catch (error) {
       console.error("Error fetching settings:", error.message);
     }

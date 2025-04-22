@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-// import supabase from "../config/SupabaseClient";
+import supabase from "../config/SupabaseClient";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "./Header";
@@ -78,6 +78,7 @@ const FeedbackForm = () => {
     try {
       const res = await fetch(`http://localhost:5000/api/form-student/${studentPrn}`);
       const data = await res.json();
+      console.log(data);
   
       if (!res.ok) {
         throw new Error(data.error || "Error fetching student details");
@@ -140,7 +141,7 @@ const FeedbackForm = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentData }),
       });
-  
+      console.log(res);
       const combinedData = await res.json();
       if (!res.ok) throw new Error(combinedData.error || "Failed to fetch allocations");
   
@@ -299,6 +300,7 @@ const FeedbackForm = () => {
       });
   
       const data = await response.json();
+      console.log(data);
   
       if (!response.ok) {
         throw new Error(data.error || "Failed to fetch faculty names");
@@ -341,7 +343,7 @@ const FeedbackForm = () => {
     try {
       const response = await fetch(`http://localhost:5000/api/filled-feedbacks/${studentData.s_prn}`);
       const data = await response.json();
-  
+      console.log(data);
       if (!response.ok) {
         throw new Error(data.error || "Error fetching filled feedbacks.");
       }
@@ -411,6 +413,7 @@ const FeedbackForm = () => {
       });
   
       const result = await res.json();
+      console.log(result);
   
       if (!res.ok) {
         throw new Error(result.error || "Unknown error");

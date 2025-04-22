@@ -270,6 +270,7 @@ const ToggleSlider = styled.span`
 
 const AdminPanel = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     student_editing: false,
     student_feedback: false,

@@ -298,7 +298,7 @@ const FeedbackAdmin = () => {
   // };
 
   const downloadCSV = async() => {
-    await fetchAllFeedback(); 
+    // await fetchAllFeedback(); 
 
     if (feedbackData.length === 0) {
       toast.error("No data available to download.");
@@ -384,6 +384,7 @@ const FeedbackAdmin = () => {
           <option value="ME">ME</option>
         </Select>
 
+        <Button onClick={() => { fetchAllFeedback(); }}>Fetch Feedback</Button>
         <Button onClick={() => { downloadCSV(); }}>Download CSV</Button>
       </Container>
 
